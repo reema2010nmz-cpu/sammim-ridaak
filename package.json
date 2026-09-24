@@ -1,7 +1,12 @@
 {
-  "name": "sammim-ridaak-norjan",
+  "name": "sammim-ridaak-norjan-render",
+  "version": "1.0.0",
   "private": true,
+  "description": "صمم رداءك — Norjan — Render + OpenAI",
   "engines": {
     "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.js"
   }
 }

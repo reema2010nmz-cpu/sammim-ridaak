@@ -1,19 +1,15 @@
-# صمم رداءك — Norjan — نسخة Vercel
+# صمم رداءك — Norjan — نسخة Render
 
-هذه النسخة معدّة للنشر على Vercel بدل Netlify.
-- الواجهة ثابتة وتعمل على الهاتف والكمبيوتر.
-- زر «إنشاء التصميم» يستدعي `/api/generate-image`.
-- مفتاح `OPENAI_API_KEY` يبقى في Vercel ولا يظهر في المتصفح.
-- تستخدم دالة Vercel مع نموذج `gpt-image-2`.
-- التوقيع: Norjan © 2026 — جميع الحقوق محفوظة.
+هذه النسخة تعمل كـ Node Web Service على Render، وتستخدم خادمًا خلفيًا لإرسال طلب توليد الصورة إلى OpenAI بدون كشف المفتاح في المتصفح.
 
-## النشر
-1. افتح Vercel وأنشئ مشروعًا جديدًا/Deploy.
-2. ارفع مجلد المشروع.
-3. من Settings → Environment Variables أضف:
-   `OPENAI_API_KEY`
-4. ضع مفتاح OpenAI السري كقيمة، واختر Production (وPreview إذا أردت الاختبار على المعاينة).
-5. أعد النشر.
-6. افتح الموقع واختر قطعة وأكمل الأسئلة ثم «إنشاء التصميم».
+## إعداد Render
+- Runtime: Node
+- Build Command: `npm install`
+- Start Command: `npm start`
+- Branch: `main`
+- Environment Variable: `OPENAI_API_KEY` (Secret)
 
-لا ترسل مفتاح OpenAI داخل المحادثة.
+بعد إضافة المتغير أو تغييره، اعمل Deploy جديد.
+
+## ملاحظة
+لا تضع مفتاح OpenAI داخل `app.js` أو `index.html` أو أي ملف GitHub.
