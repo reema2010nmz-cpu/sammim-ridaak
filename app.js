@@ -44,23 +44,56 @@ function selectGarment(name){state.garment=name;const k=kind[name]||'top';state.
 function renderQuestion(){const q=state.questions[state.index],pct=Math.round((state.index/state.questions.length)*100);content.innerHTML=`<div class="question-wrap"><div class="question-head"><span>تصميم ${state.garment}</span><b>${state.index+1}/${state.questions.length}</b></div><div class="progress"><span style="width:${pct}%"></span></div><div class="q-number">اختر إجابة واحدة للمتابعة</div><h1 class="question">${q.label}</h1><div class="options">${q.options.map(o=>`<button class="option" onclick="answer('${q.key}','${o.replaceAll("'","\\'")}')">${o}</button>`).join('')}</div></div>`}
 function answer(key,value){state.answers[key]=value;if(state.index<state.questions.length-1)state.index++;else state.screen='summary';render()}
 function renderSummary(){const rows=Object.entries(state.answers).map(([k,v])=>`<div class="spec"><b>${labels[k]}</b><span>${esc(v)}</span></div>`).join('');content.innerHTML=`<div class="summary"><div class="eyebrow">المعاينة النهائية</div><h2>${esc(state.garment)}</h2><p class="summary-sub">هذه هي مواصفات التصميم التي اخترتها.</p><div class="preview-card"><img src="${imageSVG(state.garment)}" alt="${esc(state.garment)}"><div><strong>${esc(state.garment)}</strong><span>جاهز للإنشاء بالذكاء الاصطناعي</span></div></div><div class="spec-list">${rows}</div><button class="create-btn" onclick="createDesign()">✨ إنشاء التصميم</button><div id="result"></div></div>`}
-async function createDesign(){
-  const result=document.getElementById('result');
-  const button=document.querySelector('.create-btn');
-  const specs=Object.entries(state.answers).map(([k,v])=>`${labels[k]}: ${v}`).join('، ');
-  const prompt=`أنشئ صورة أزياء واقعية واحترافية لقطعة ${state.garment}. التزم بدقة بالمواصفات التالية: ${specs}. أظهر القطعة كاملة وواضحة، بتفاصيل دقيقة للقصة والخياطة والخامة والنقشة واللون والإضافات. اجعل التصميم يبدو كقطعة أزياء حقيقية قابلة للتنفيذ، بتنسيق تصوير أزياء احترافي وإضاءة استوديو ناعمة وخلفية بسيطة وأنيقة. لا تضف أي كتابة أو شعارات أو علامات مائية إلى الصورة.`;
-  if(button){button.disabled=true;button.innerHTML='⏳ جاري إنشاء التصميم...';}
-  result.innerHTML=`<div class="result loading"><div class="spinner"></div><h3>جاري إنشاء تصميمك...</h3><p>الذكاء الاصطناعي يحوّل المواصفات التي اخترتها إلى صورة.</p></div>`;
-  try{
-    const response=await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
-    const data=await response.json().catch(()=>({}));
-    if(!response.ok) throw new Error(data.error||'تعذر إنشاء الصورة.');
-    if(!data.image) throw new Error('لم تصل الصورة.');
-    result.innerHTML=`<div class="result result-image"><h3>✨ تم إنشاء تصميمك</h3><img class="generated-image" src="${data.image}" alt="التصميم الذي تم إنشاؤه"><div class="result-actions"><button class="secondary-btn" onclick="downloadDesign()">حفظ الصورة</button><button class="secondary-btn" onclick="createDesign()">إعادة الإنشاء</button></div></div>`;
-    window.generatedDesign=data.image;
-  }catch(error){
-    result.innerHTML=`<div class="result error"><div class="result-icon">!</div><h3>تعذر إنشاء الصورة</h3><p>${esc(error.message||'حدث خطأ غير متوقع.')}</p><p class="hint">إذا ظهر خطأ المفتاح، تأكد أن OPENAI_API_KEY متاح للـ Functions في Vercel ثم أعد النشر.</p><button class="secondary-btn" onclick="createDesign()">حاول مرة أخرى</button></div>`;
-  }finally{if(button){button.disabled=false;button.innerHTML='✨ إنشاء التصميم';}}
+async async function createDesign() {
+  const result = document.getElementById('result');
+  const button = document.querySelector('.create-btn');
+  const specs = Object.entries(state.answers).map(([k,v]) => `${labels[k]}: ${v}`).join('، ');
+  
+  const prompt = `A highly realistic, professional fashion studio photograph of a ${state.garment}. Specifications: ${specs}. Show the complete garment clearly with high-end fabric texture, professional stitching details, exact colors, and clean aesthetics. Elegant lighting, soft shadows, plain background, 4k resolution, hyper-detailed fashion design. No text, no watermarks.`;
+  
+  if (button) {
+    button.disabled = true;
+    button.innerHTML = '⏳ جاري إنشاء التصميم...';
+  }
+  
+  result.innerHTML = `<div class="result loading"><div class="spinner"></div><h3>جاري إنشاء تصميمك...</h3><p>الذكاء الاصطناعي يحوّل المواصفات التي اخترتها إلى صورة.</p></div>`;
+  
+  try {
+    const response = await fetch('https://together.xyz', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer’key_CfNgkXCdeYFA3Xu1sB2ac
+      },
+      body: JSON.stringify({
+        model: 'black-forest-labs/FLUX.1-schnell-Free', 
+        prompt: prompt,
+        steps: 4,
+        n: 1,
+        width: 1024,
+        height: 1024
+      })
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok || !data.data || !data.data.url) {
+      throw new Error(data.error?.message || 'تعذر إنشاء الصورة من الخادم.');
+    }
+    
+    const imageUrl = data.data.url;
+    
+    result.innerHTML = `<div class="result result-image"><h3>✨ تم إنشاء تصميمك</h3><img class="generated-image" src="${imageUrl}" alt="التصميم الذي تم إنشاؤه"><div class="result-actions"><button class="secondary-btn" onclick="downloadDesign()">حفظ الصورة</button><button class="secondary-btn" onclick="createDesign()">إعادة الإنشاء</button></div></div>`;
+    window.generatedDesign = imageUrl;
+    
+  } catch (error) {
+    result.innerHTML = `<div class="result error"><div class="result-icon">!</div><h3>تعذر إنشاء الصورة</h3><p>${esc(error.message || 'حدث خطأ غير متوقع.')}</p><button class="secondary-btn" onclick="createDesign()">حاول مرة أخرى</button></div>`;
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = '✨ إنشاء التصميم';
+    }
+  }
 }
 function downloadDesign(){if(!window.generatedDesign)return;const a=document.createElement('a');a.href=window.generatedDesign;a.download='tasmeem-ridaak.png';a.click()}
 backBtn.onclick=()=>{if(state.screen==='garments')state.screen='categories';else if(state.screen==='questions')state.screen='garments';else if(state.screen==='summary')state.screen='questions';render()};
